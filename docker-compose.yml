@@ -1,0 +1,62 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /var/www/html
+    volumes:
+      - ./shortlink-api:/var/www/html
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /var/www/html
+    volumes:
+      - ./shortlink-api:/var/www/html
+      - ./docker/init.sh:/var/www/init.sh
+    command: sh /var/www/init.sh
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: "no"
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /var/www/html
+    volumes:
+      - ./shortlink-api:/var/www/html
+    command: php bin/console messenger:consume async -vv
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./shortlink-api:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "8000:80"
+    depends_on:
+      app:
+        condition: service_started
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: short_link_api_service
+      MYSQL_USER: short_link_api_user
+      MYSQL_PASSWORD: short_link_api_pass
+      MYSQL_ROOT_PASSWORD: short_link_api_root
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-pshort_link_api_root"]
+      interval: 10s
+      timeout: 5s
+      retries: 10

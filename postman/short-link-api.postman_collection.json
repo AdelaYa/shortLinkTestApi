@@ -1,0 +1,271 @@
+{
+  "info": {
+    "_postman_id": "9e3e9e7e-4d20-4bc0-9d6f-7d9b1e3a6f10",
+    "name": "Short Link API",
+    "description": "Postman collection for the short link API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Generate Short Link - New URL",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/shortlink?url={{originalUrl}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "shortlink"
+          ],
+          "query": [
+            {
+              "key": "url",
+              "value": "{{originalUrl}}"
+            }
+          ]
+        },
+        "description": "First request for a new URL. Expected to return 202 while the short code is being generated asynchronously."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 202', function () {",
+              "  pm.response.to.have.status(202);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "pm.test('Response success is true', function () {",
+              "  pm.expect(json.success).to.eql(true);",
+              "});",
+              "",
+              "pm.test('Response status is generating', function () {",
+              "  pm.expect(json.data.status).to.eql('generating');",
+              "});",
+              "",
+              "pm.test('Original URL is echoed back', function () {",
+              "  pm.expect(json.data.original_url).to.eql(pm.variables.get('originalUrl'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "202 Accepted - Generating",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/shortlink?url={{originalUrl}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shortlink"
+              ],
+              "query": [
+                {
+                  "key": "url",
+                  "value": "{{originalUrl}}"
+                }
+              ]
+            }
+          },
+          "status": "Accepted",
+          "code": 202,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"success\": true,\n  \"data\": {\n    \"status\": \"generating\",\n    \"original_url\": \"https://example.com/page\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Generate Short Link - Missing Param",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/shortlink",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "shortlink"
+          ]
+        },
+        "description": "No url query parameter. Expected to return 400 validation error."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "pm.test('Response success is false', function () {",
+              "  pm.expect(json.success).to.eql(false);",
+              "});",
+              "",
+              "pm.test('Response status is validation_error', function () {",
+              "  pm.expect(json.data.status).to.eql('validation_error');",
+              "});",
+              "",
+              "pm.test('Error contains url field', function () {",
+              "  pm.expect(json.data.errors[0].field).to.eql('url');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "400 Bad Request - Validation Error",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/shortlink",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shortlink"
+              ]
+            }
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"success\": false,\n  \"data\": {\n    \"status\": \"validation_error\",\n    \"errors\": [\n      {\n        \"field\": \"url\",\n        \"message\": \"Parameter \\\"url\\\" is required\"\n      }\n    ]\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Generate Short Link - Invalid URL",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/shortlink?url={{invalidUrl}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "shortlink"
+          ],
+          "query": [
+            {
+              "key": "url",
+              "value": "{{invalidUrl}}"
+            }
+          ]
+        },
+        "description": "Malformed URL value. Expected to return 400 validation error."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "pm.test('Response success is false', function () {",
+              "  pm.expect(json.success).to.eql(false);",
+              "});",
+              "",
+              "pm.test('Response status is validation_error', function () {",
+              "  pm.expect(json.data.status).to.eql('validation_error');",
+              "});",
+              "",
+              "pm.test('Error message is about URL format', function () {",
+              "  pm.expect(json.data.errors[0].field).to.eql('url');",
+              "  pm.expect(json.data.errors[0].message).to.eql('Parameter \"url\" must be a valid URL');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "400 Bad Request - Validation Error",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/shortlink?url={{invalidUrl}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "shortlink"
+              ],
+              "query": [
+                {
+                  "key": "url",
+                  "value": "{{invalidUrl}}"
+                }
+              ]
+            }
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"success\": false,\n  \"data\": {\n    \"status\": \"validation_error\",\n    \"errors\": [\n      {\n        \"field\": \"url\",\n        \"message\": \"Parameter \\\"url\\\" must be a valid URL\"\n      }\n    ]\n  }\n}"
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "originalUrl",
+      "value": "https://example.com/page"
+    },
+    {
+      "key": "invalidUrl",
+      "value": "not-a-url"
+    }
+  ]
+}
